@@ -1,66 +1,95 @@
-from fastapi import FastAPI, HTTPException
+import os
 from typing import List, Optional
-from .models import Book, BookCreate
-from .storage import load_books_from_file, save_books_to_file, get_next_id
 
-app = FastAPI()
+from fastapi import FastAPI, Depends, HTTPException
+from sqlalchemy.orm import Session
 
+from src.library_catalog import models, schemas, database
+from src.library_catalog.repository import BookRepository
 
-@app.get("/books/", response_model=List[Book])
-def get_books(author: Optional[str] = None,
-              genre: Optional[str] = None,
-              available: Optional[bool] = None) -> List[Book]:
+from src.clients.openlibrary_client import OpenLibraryClient
+from src.clients.jsonbin_client import JsonBinClient
 
-    books_db = load_books_from_file()
-    result = books_db
-    if author:
-        result = [book for book in result if book["author"].lower() == author.lower()]
-    if genre:
-        result = [book for book in result if book["genre"].lower() == genre.lower()]
-    if available is not None:
-        result = [book for book in result if book["available"] == available]
-    return result
+models.Base.metadata.create_all(bind=database.engine)
 
+JSONBIN_TOKEN = os.getenv("JSONBIN_TOKEN")
+JSONBIN_BIN_ID = os.getenv("JSONBIN_BIN_ID")
+# Инициализация клиентов
+jsonbin_client = JsonBinClient(bin_id=JSONBIN_BIN_ID, token=JSONBIN_TOKEN)
 
-@app.get("/books/{book_id}", response_model=Book)
-def get_book(book_id: int) -> Book:
-    books_db = load_books_from_file()
-    for book in books_db:
-        if book['id'] == book_id:
-            return book
-    raise HTTPException(status_code=404, detail="Книга не найдена")
+openlibrary_client = OpenLibraryClient()
+
+app = FastAPI(
+    title="Library Catalog API",
+    description="API для управления каталогом книг",
+    version="1.0.0",
+    docs_url="/api/v1/docs",
+    redoc_url="/api/v1/redoc",
+    openapi_url="/api/v1/openapi.json",
+)
 
 
-@app.post("/books/", response_model=Book)
-def add_book(book: BookCreate) -> Book:
-    books_db = load_books_from_file()
-    book_dict = book.model_dump()
-    book_dict["id"] = get_next_id(books_db)
-    books_db.append(book_dict)
-    save_books_to_file(books_db)
-    return book_dict
+# Dependense
+def get_db():
+    db = database.SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
-@app.put("/books/{book_id}", response_model=Book)
-def update_book(book_id: int, updated_book: BookCreate) -> Book:
-    books_db = load_books_from_file()
-    for book in books_db:
-        if book['id'] == book_id:
-            book.update(updated_book.model_dump())
-            save_books_to_file(books_db)
-            return book
-    raise HTTPException(status_code=404, detail="Книга не найдена")
+@app.get("/books/", response_model=List[schemas.Book])
+async def get_books(
+    author: Optional[str] = None,
+    genre: Optional[str] = None,
+    available: Optional[bool] = None,
+    db: Session = Depends(get_db),
+):
+    repo = BookRepository(db)
+    return repo.get_all(author=author, genre=genre, available=available)
+
+
+@app.get("/books/{book_id}", response_model=schemas.Book)
+async def get_book(book_id: int, db: Session = Depends(get_db)):
+    repo = BookRepository(db)
+    book = repo.get_by_id(book_id)
+    if not book:
+        raise HTTPException(status_code=404, detail="Книга не найдена")
+    return book
+
+
+@app.post("/books/", response_model=schemas.Book)
+async def add_book(book: schemas.BookCreate, db: Session = Depends(get_db)):
+    repo = BookRepository(db)
+
+    # Попробуем найти данные в OpenLibrary
+    enriched = await openlibrary_client.get_data(book.title)
+    if enriched:
+        if not book.author and enriched["author"]:
+            book.author = enriched["author"]
+        if not book.description and enriched["description"]:
+            book.description = str(enriched["description"])
+        if not book.cover_url and enriched["cover_id"]:
+            book.cover_url = openlibrary_client.get_cover_url(enriched["cover_id"])
+
+    return repo.create(book)
+
+
+@app.put("/books/{book_id}", response_model=schemas.Book)
+async def update_book(
+    book_id: int, updated_book: schemas.BookUpdate, db: Session = Depends(get_db)
+):
+    repo = BookRepository(db)
+    book = repo.update(book_id, updated_book)
+    if not book:
+        raise HTTPException(status_code=404, detail="Книга не найдена")
+    return book
 
 
 @app.delete("/books/{book_id}")
-def delete_book(book_id: int):
-    books_db = load_books_from_file()
-    for i, book in enumerate(books_db):
-        if book["id"] == book_id:
-            del books_db[i]
-            save_books_to_file(books_db)
-            return {
-                "ok": True,
-                'msg': 'Success'
-            }
-    raise HTTPException(status_code=404, detail="Книга не найдена")
+async def delete_book(book_id: int, db: Session = Depends(get_db)):
+    repo = BookRepository(db)
+    book = repo.delete(book_id)
+    if not book:
+        raise HTTPException(status_code=404, detail="Книга не найдена")
+    return {"ok": True, "msg": "Success"}

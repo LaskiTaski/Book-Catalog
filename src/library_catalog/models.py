@@ -1,24 +1,17 @@
-from pydantic import BaseModel
+from sqlalchemy import Column, Integer, String, Boolean
+from src.library_catalog.database import Base
 
 
-# Основной класс основанный на BaseModel
-class BookBase(BaseModel):
-    title: str
-    author: str
-    year: int
-    genre: str
-    pages: int
-    available: bool
+class Book(Base):
 
+    __tablename__ = "books"
 
-# Класс для создания книг основанный на BookBase
-class BookCreate(BookBase):
-    pass
-
-
-# Класс для получения книги с возможностью фильтрации основанный на BookBase
-class Book(BookBase):
-    id: int
-
-    class Config:
-        from_attributes = True  # Нужно для совместимости с БД в будущем
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    author = Column(String, nullable=False)
+    year = Column(Integer)
+    genre = Column(String)
+    pages = Column(Integer)
+    available = Column(Boolean, nullable=False, default=True)
+    description = Column(String, nullable=True)
+    cover_url = Column(String, nullable=True)
