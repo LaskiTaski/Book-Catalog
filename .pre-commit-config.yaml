@@ -1,0 +1,15 @@
+repos:
+  # Ruff = flake8 + isort + многое другое, работает очень быстро
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.4
+    hooks:
+      - id: ruff
+        # авто-исправления, если возможно
+        args: [--fix]
+
+  # Black - выравнивает код по PEP-8; запускаем после ruff
+  - repo: https://github.com/psf/black
+    rev: 24.4.2
+    hooks:
+      - id: black
+        language_version: python3.10

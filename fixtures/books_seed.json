@@ -1,0 +1,98 @@
+[
+  {
+    "id": 1,
+    "title": "Dune",
+    "author": "Frank Herbert",
+    "year": 1965,
+    "genre": "SF",
+    "pages": 604,
+    "available": true,
+    "description": "Epic desert planets and politics."
+  },
+  {
+    "id": 2,
+    "title": "Neuromancer",
+    "author": "William Gibson",
+    "year": 1984,
+    "genre": "Cyberpunk",
+    "pages": 320,
+    "available": true
+  },
+  {
+    "id": 3,
+    "title": "The Hobbit",
+    "author": "J. R. R. Tolkien",
+    "year": 1937,
+    "genre": "Fantasy",
+    "pages": 310,
+    "available": false
+  },
+  {
+    "id": 4,
+    "title": "Foundation",
+    "author": "Isaac Asimov",
+    "year": 1951,
+    "genre": "Science Fiction",
+    "pages": 255,
+    "available": true,
+    "description": "Начало легендарного цикла о распаде Галактической Империи."
+  },
+  {
+    "id": 5,
+    "title": "1984",
+    "author": "George Orwell",
+    "year": 1949,
+    "genre": "Dystopia",
+    "pages": 328,
+    "available": false,
+    "description": "Классический роман-предупреждение о тоталитаризме."
+  },
+  {
+    "id": 6,
+    "title": "The Catcher in the Rye",
+    "author": "J. D. Salinger",
+    "year": 1951,
+    "genre": "Literary Fiction",
+    "pages": 277,
+    "available": true
+  },
+  {
+    "id": 7,
+    "title": "The Great Gatsby",
+    "author": "F. Scott Fitzgerald",
+    "year": 1925,
+    "genre": "Classic",
+    "pages": 180,
+    "available": true,
+    "description": "Американская мечта, роскошь и иллюзии 1920-х."
+  },
+  {
+    "id": 8,
+    "title": "Harry Potter and the Philosopher's Stone",
+    "author": "J. K. Rowling",
+    "year": 1997,
+    "genre": "Fantasy",
+    "pages": 223,
+    "available": false,
+    "description": "Первая книга о юном волшебнике."
+  },
+  {
+    "id": 9,
+    "title": "The Name of the Wind",
+    "author": "Patrick Rothfuss",
+    "year": 2007,
+    "genre": "Epic Fantasy",
+    "pages": 662,
+    "available": true
+  },
+  {
+    "id": 10,
+    "title": "Pride and Prejudice",
+    "author": "Jane Austen",
+    "year": 1813,
+    "genre": "Romance",
+    "pages": 279,
+    "available": true,
+    "description": "Ироничный роман о семье Беннет и поиске счастья."
+  }
+]
